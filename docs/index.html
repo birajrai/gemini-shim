@@ -358,8 +358,8 @@
           <span>Python</span>
         </button>
         <button class="tab-btn" data-target="tab-node">
-          <i data-lucide="file-code"></i>
-          <span>Node.js</span>
+          <i data-lucide="package"></i>
+          <span>NPM SDK</span>
         </button>
         <button class="tab-btn" data-target="tab-google">
           <i data-lucide="layers"></i>
@@ -396,22 +396,21 @@ for chunk in response:
       </div>
 
       <div id="tab-node" class="code-pane code-block" style="display: none;">
-<pre><code>import OpenAI from 'openai';
+<pre><code>import { GeminiShim } from 'gemini-shim';
 
-const openai = new OpenAI({
+const ai = new GeminiShim({
   baseURL: 'http://localhost:8081/v1',
-  apiKey: 'any-key',
+  defaultModel: 'gemini-3.7-flash'
 });
 
-const stream = await openai.chat.completions.create({
-  model: 'gemini-3.7-flash',
-  messages: [{ role: 'user', content: 'Hello!' }],
-  stream: true,
-});
+// 1. One-line stream
+const stream = await ai.stream('Write a poem about space');
+for await (const token of stream) process.stdout.write(token);
 
-for await (const chunk of stream) {
-  process.stdout.write(chunk.choices[0]?.delta?.content || '');
-}</code></pre>
+// 2. Multi-turn Chatbot with memory
+const bot = ai.createChat({ systemInstruction: 'You are an AI assistant.' });
+const res = await bot.sendMessage('Hello, what can you do?');
+console.log(res.text);</code></pre>
       </div>
 
       <div id="tab-google" class="code-pane code-block" style="display: none;">

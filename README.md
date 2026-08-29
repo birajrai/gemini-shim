@@ -59,6 +59,42 @@ npx wrangler deploy
 ```
 See the [Cloudflare Deployment Guide](cloudflare/README.md) for web dashboard setup and environment variables.
 
+---
+
+## NPM SDK / Chatbot Library
+
+Build AI chatbots in JavaScript & TypeScript with the official zero-config SDK:
+
+```bash
+npm install gemini-shim
+```
+
+```typescript
+import { GeminiShim } from "gemini-shim";
+
+const ai = new GeminiShim({
+  baseURL: "http://127.0.0.1:8081/v1", // or your Cloudflare Worker URL
+  defaultModel: "gemini-3.7-flash"
+});
+
+// 1. One-liner chat
+const res = await ai.chat("Hello Gemini!");
+console.log(res.text);
+
+// 2. Real-time token streaming
+const stream = await ai.stream("Write a short poem");
+for await (const chunk of stream) {
+  process.stdout.write(chunk);
+}
+
+// 3. Multi-turn Chatbot with memory
+const bot = ai.createChat({ systemInstruction: "You are a helpful assistant." });
+const r1 = await bot.sendMessage("Hi, I am from Nepal.");
+const r2 = await bot.sendMessage("What is my country?"); // Remembers context
+```
+See the [SDK Documentation](sdk/README.md) for Next.js, Express, and advanced examples.
+
+
 ### Cookie Extraction Extension
 
 Load the unpacked extension in [`extension/`](extension/) into Chrome/Edge to export your Google session authentication to `gemini-auth.json` or copy cookies for Cloudflare Workers with a single click. See [Extension Guide](extension/README.md).

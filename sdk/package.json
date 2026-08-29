@@ -1,0 +1,53 @@
+{
+  "name": "gemini-shim",
+  "version": "1.0.0",
+  "description": "Zero-config Gemini AI client & chatbot SDK with streaming and multi-turn chat support for Node.js, Bun, Deno, and Browsers.",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target node && bun build ./src/index.ts --outfile ./dist/index.cjs --target node && bun x tsc --emitDeclarationOnly",
+    "test": "bun test"
+  },
+  "keywords": [
+    "gemini",
+    "gemini-ai",
+    "ai",
+    "chatbot",
+    "llm",
+    "google-gemini",
+    "streaming",
+    "openai-compatible",
+    "agent"
+  ],
+  "author": "birajrai",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/birajrai/gemini-shim.git"
+  },
+  "bugs": {
+    "url": "https://github.com/birajrai/gemini-shim/issues"
+  },
+  "homepage": "https://github.com/birajrai/gemini-shim#readme",
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
