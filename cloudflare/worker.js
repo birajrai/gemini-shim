@@ -6,11 +6,32 @@
  * License: MIT
  */
 
+let dynamicBL = "boq_assistant-bard-web-server_20260827.05_p0";
+
+async function fetchLatestGeminiBL() {
+  try {
+    const res = await fetch("https://gemini.google.com/app", {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
+      }
+    });
+    if (res.ok) {
+      const text = await res.text();
+      const m = text.match(/"cfb2h":"(boq_assistant-bard-web-server_[^"]+)"/);
+      if (m) {
+        dynamicBL = m[1];
+        return m[1];
+      }
+    }
+  } catch {}
+  return dynamicBL;
+}
+
 const DEFAULT_CONFIG = {
   retryAttempts: 3,
   retryDelaySec: 2,
   requestTimeoutSec: 28,
-  geminiBl: "boq_assistant-bard-web-server_20260716.08_p0",
+  geminiBl: "boq_assistant-bard-web-server_20260827.05_p0",
   authUser: null,
   xsrfToken: null,
   defaultModel: "gemini-3.6-flash",
@@ -451,6 +472,21 @@ function authorize(request, cfg) {
   return false;
 }
 
+async function executeUpstreamRequest(targetUrlBuilder, reqHeaders, reqBody, cfg) {
+  let bl = cfg.geminiBl || dynamicBL;
+  let targetURL = targetUrlBuilder(bl);
+  let resp = await fetch(targetURL, { method: "POST", headers: reqHeaders, body: reqBody });
+
+  if (resp.status === 405) {
+    const freshBL = await fetchLatestGeminiBL();
+    if (freshBL) {
+      targetURL = targetUrlBuilder(freshBL);
+      resp = await fetch(targetURL, { method: "POST", headers: reqHeaders, body: reqBody });
+    }
+  }
+  return resp;
+}
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method === "OPTIONS") {
@@ -542,10 +578,10 @@ async function handleChat(req, cfg) {
   const reqHeaders = await getAuthHeaders(cfg);
   const reqBody = buildPayload(prompt, modeId, thinkMode, null, extra, cfg);
   const reqId = (Date.now() + Math.floor(Math.random() * 1000)) % 1000000;
-  const targetURL = `https://gemini.google.com${cfg.authUser ? `/u/${cfg.authUser}` : ""}/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=${cfg.geminiBl}&hl=en&_reqid=${reqId}&rt=c`;
+  const urlBuilder = (bl) => `https://gemini.google.com${cfg.authUser ? `/u/${cfg.authUser}` : ""}/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=${bl}&hl=en&_reqid=${reqId}&rt=c`;
 
   if (stream && hasNoTools) {
-    const upstreamResp = await fetch(targetURL, { method: "POST", headers: reqHeaders, body: reqBody });
+    const upstreamResp = await executeUpstreamRequest(urlBuilder, reqHeaders, reqBody, cfg);
     if (!upstreamResp.ok) return jsonResponse({ error: { message: `upstream error: ${upstreamResp.status}` } }, 502);
 
     const { readable, writable } = new TransformStream();
@@ -614,7 +650,7 @@ async function handleChat(req, cfg) {
     });
   }
 
-  const resp = await fetch(targetURL, { method: "POST", headers: reqHeaders, body: reqBody });
+  const resp = await executeUpstreamRequest(urlBuilder, reqHeaders, reqBody, cfg);
   if (!resp.ok) return jsonResponse({ error: { message: `upstream error ${resp.status}` } }, 502);
 
   const raw = await resp.text();
@@ -682,9 +718,9 @@ async function handleResponses(req, cfg) {
   const reqHeaders = await getAuthHeaders(cfg);
   const reqBody = buildPayload(prompt, modeId, thinkMode, null, extra, cfg);
   const reqId = (Date.now() + Math.floor(Math.random() * 1000)) % 1000000;
-  const targetURL = `https://gemini.google.com${cfg.authUser ? `/u/${cfg.authUser}` : ""}/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=${cfg.geminiBl}&hl=en&_reqid=${reqId}&rt=c`;
+  const urlBuilder = (bl) => `https://gemini.google.com${cfg.authUser ? `/u/${cfg.authUser}` : ""}/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=${bl}&hl=en&_reqid=${reqId}&rt=c`;
 
-  const resp = await fetch(targetURL, { method: "POST", headers: reqHeaders, body: reqBody });
+  const resp = await executeUpstreamRequest(urlBuilder, reqHeaders, reqBody, cfg);
   if (!resp.ok) return jsonResponse({ error: { message: `upstream error ${resp.status}` } }, 502);
 
   const raw = await resp.text();
@@ -748,9 +784,9 @@ async function handleGoogleGenerate(pathname, req, cfg, stream) {
   const reqHeaders = await getAuthHeaders(cfg);
   const reqBody = buildPayload(prompt, modeId, thinkMode, null, extra, cfg);
   const reqId = (Date.now() + Math.floor(Math.random() * 1000)) % 1000000;
-  const targetURL = `https://gemini.google.com${cfg.authUser ? `/u/${cfg.authUser}` : ""}/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=${cfg.geminiBl}&hl=en&_reqid=${reqId}&rt=c`;
+  const urlBuilder = (bl) => `https://gemini.google.com${cfg.authUser ? `/u/${cfg.authUser}` : ""}/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=${bl}&hl=en&_reqid=${reqId}&rt=c`;
 
-  const resp = await fetch(targetURL, { method: "POST", headers: reqHeaders, body: reqBody });
+  const resp = await executeUpstreamRequest(urlBuilder, reqHeaders, reqBody, cfg);
   if (!resp.ok) return jsonResponse({ error: { message: `upstream error ${resp.status}` } }, 502);
 
   const raw = await resp.text();

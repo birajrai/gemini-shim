@@ -40,7 +40,7 @@ func DefaultConfig() *Config {
 		RetryAttempts:     3,
 		RetryDelaySec:     2,
 		RequestTimeoutSec: 180,
-		GeminiBL:          "boq_assistant-bard-web-server_20260716.08_p0",
+		GeminiBL:          "boq_assistant-bard-web-server_20260827.05_p0",
 		AuthUser:          nil,
 		XSRFToken:         nil,
 		DefaultModel:      "gemini-3.6-flash",

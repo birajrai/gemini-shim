@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/birajrai/gemini-shim/internal/config"
@@ -108,11 +109,44 @@ func BuildPayload(prompt string, modelID int, thinkMode int, fileRefs []string, 
 	return params.Encode(), nil
 }
 
+var (
+	dynamicBLMutex sync.RWMutex
+	dynamicBL      = "boq_assistant-bard-web-server_20260827.05_p0"
+	blRegex        = regexp.MustCompile(`"cfb2h":"(boq_assistant-bard-web-server_[^"]+)"`)
+)
+
+// FetchLatestGeminiBL queries Gemini Web to fetch the active build label dynamically.
+func FetchLatestGeminiBL() string {
+	client := newHTTPClient(10 * time.Second)
+	req, err := http.NewRequest("GET", "https://gemini.google.com/app", nil)
+	if err != nil {
+		dynamicBLMutex.RLock()
+		defer dynamicBLMutex.RUnlock()
+		return dynamicBL
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36")
+	resp, err := client.Do(req)
+	if err == nil {
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		if m := blRegex.FindStringSubmatch(string(body)); len(m) > 1 {
+			dynamicBLMutex.Lock()
+			dynamicBL = m[1]
+			dynamicBLMutex.Unlock()
+			config.Log("Auto-refreshed Gemini build label: %s", m[1])
+			return m[1]
+		}
+	}
+	dynamicBLMutex.RLock()
+	defer dynamicBLMutex.RUnlock()
+	return dynamicBL
+}
+
 func getURL() string {
 	cfg := config.Get()
 	reqID := (time.Now().Unix() + int64(rand.Intn(1000))) % 1000000
 	accountPrefix := AccountPrefix()
-	bl := "boq_assistant-bard-web-server_20260716.08_p0"
+	bl := dynamicBL
 	if cfg != nil && cfg.GeminiBL != "" {
 		bl = cfg.GeminiBL
 	}
@@ -257,6 +291,10 @@ func Generate(prompt string, modelID int, thinkMode int, fileRefs []string, extr
 					}
 					lastErr = parseErr
 				} else {
+					if resp.StatusCode == 405 {
+						FetchLatestGeminiBL()
+						urlStr = getURL()
+					}
 					lastErr = fmt.Errorf("upstream returned status %d: %s", resp.StatusCode, string(bodyBytes))
 				}
 			} else {
@@ -371,6 +409,10 @@ func GenerateStream(ctx context.Context, prompt string, modelID int, thinkMode i
 			}
 		} else {
 			if resp != nil {
+				if resp.StatusCode == 405 {
+					FetchLatestGeminiBL()
+					urlStr = getURL()
+				}
 				resp.Body.Close()
 				lastErr = fmt.Errorf("upstream returned status %d", resp.StatusCode)
 			} else {
