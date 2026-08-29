@@ -24,4 +24,4 @@ jobs:
         run: go test -v -race ./...
 
       - name: Build Binary
-        run: CGO_ENABLED=0 go build -o gemini-shim cmd/gemini-shim/main.go
+        run: CGO_ENABLED=0 go build -o gemini-shim .
