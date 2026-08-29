@@ -1,0 +1,11 @@
+services:
+  gemini-shim:
+    build: .
+    ports:
+      - "8081:8081"
+    environment:
+      - GEMINI_SHIM_CONFIG=/app/config.json
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./cookie.json:/app/cookie.json:ro
+    restart: unless-stopped

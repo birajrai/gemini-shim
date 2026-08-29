@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v1.1.0 or latest)'
+        required: true
+        default: 'latest'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Release Binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Determine Release Tag
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="latest"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "is_latest=$([ "$TAG" = "latest" ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+
+      - name: Cross-Compile Standalone Binaries
+        run: |
+          mkdir -p dist
+          TAG="${{ steps.vars.outputs.tag }}"
+          TARGETS=(
+            "linux/amd64/gemini-shim"
+            "linux/arm64/gemini-shim"
+            "darwin/amd64/gemini-shim"
+            "darwin/arm64/gemini-shim"
+            "windows/amd64/gemini-shim.exe"
+            "windows/arm64/gemini-shim.exe"
+          )
+
+          for TARGET in "${TARGETS[@]}"; do
+            IFS="/" read -r GOOS GOARCH BIN_NAME <<< "$TARGET"
+            OUTPUT_NAME="gemini-shim-${TAG}-${GOOS}-${GOARCH}"
+            BUILD_DIR="build/${GOOS}-${GOARCH}"
+            mkdir -p "$BUILD_DIR"
+            
+            echo "Compiling for ${GOOS}/${GOARCH}..."
+            CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -ldflags="-w -s" -o "$BUILD_DIR/$BIN_NAME" cmd/gemini-shim/main.go
+            
+            cp LICENSE "$BUILD_DIR/"
+            cp config.example.json "$BUILD_DIR/"
+            
+            if [ "$GOOS" = "windows" ]; then
+              (cd "$BUILD_DIR" && zip -q -r "../../dist/${OUTPUT_NAME}.zip" .)
+            else
+              tar -czf "dist/${OUTPUT_NAME}.tar.gz" -C "$BUILD_DIR" .
+            fi
+          done
+
+      - name: Compute Checksums
+        run: |
+          cd dist
+          sha256sum * > checksums.txt
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: ${{ steps.vars.outputs.tag == 'latest' && 'Latest Build (Rolling Release)' || steps.vars.outputs.tag }}
+          files: dist/*
+          draft: false
+          prerelease: ${{ steps.vars.outputs.is_latest == 'true' }}
+          generate_release_notes: true

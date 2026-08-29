@@ -1,0 +1,29 @@
+# Binaries
+gemini-shim
+gemini-web2api
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Config and credentials
+config.json
+cookie.txt
+cookie.json
+gemini-auth.json
+.env
+
+# IDEs
+.idea/
+.vscode/
+.DS_Store
+
+# Archived old code
+old/

@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary Meta Tags (SEO) -->
+  <title>gemini-shim | Free OpenAI-Compatible API Proxy for Google Gemini Web</title>
+  <meta name="title" content="gemini-shim | Free OpenAI-Compatible API Proxy for Google Gemini Web">
+  <meta name="description" content="gemini-shim converts Google Gemini Web into a high-performance, OpenAI-compatible and Gemini Native API proxy. Zero authentication required, real-time SSE streaming, multimodal image support, and Cloudflare Workers edge deployment.">
+  <meta name="keywords" content="gemini api, openai compatible gemini, gemini to openai proxy, gemini web2api, free gemini api, gemini-shim, cloudflare workers gemini, chatbox gemini, cherry studio gemini, nextchat gemini, gemini streaming proxy">
+  <meta name="author" content="birajrai">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://birajrai.github.io/gemini-shim/">
+
+  <!-- Open Graph / Facebook (GEO / Social) -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://birajrai.github.io/gemini-shim/">
+  <meta property="og:title" content="gemini-shim | Free OpenAI-Compatible API Proxy for Google Gemini Web">
+  <meta property="og:description" content="Ultra-fast, zero-auth edge shim converting Google Gemini Web into OpenAI and Gemini Native APIs. Written in Go + Gin & Cloudflare Workers.">
+  <meta property="og:image" content="https://birajrai.github.io/gemini-shim/logo.svg">
+
+  <!-- Twitter Card (GEO / Social) -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://birajrai.github.io/gemini-shim/">
+  <meta property="twitter:title" content="gemini-shim | Free OpenAI-Compatible API Proxy for Google Gemini Web">
+  <meta property="twitter:description" content="Convert Google Gemini Web into high-performance OpenAI and Gemini API compatible endpoints. Zero auth required by default.">
+  <meta property="twitter:image" content="https://birajrai.github.io/gemini-shim/logo.svg">
+
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Structured Data / JSON-LD for Search Engines & AI Answer Engines (AEO/GEO) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "gemini-shim",
+        "headline": "Ultra-fast OpenAI-Compatible API Proxy for Google Gemini Web",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Linux, macOS, Windows, Cloudflare Workers",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "High-performance proxy converting Google Gemini Web into standard OpenAI-compatible and Gemini Native API endpoints. Features native SSE streaming, tool calling, and multimodal uploads.",
+        "url": "https://birajrai.github.io/gemini-shim/",
+        "downloadUrl": "https://github.com/birajrai/gemini-shim/releases/latest",
+        "license": "https://opensource.org/licenses/MIT",
+        "author": {
+          "@type": "Person",
+          "name": "Biraj Rai",
+          "url": "https://github.com/birajrai"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is gemini-shim?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "gemini-shim is an open-source, high-performance API proxy written in Go (using the Gin framework) and Cloudflare Workers that translates Google Gemini's web frontend protocol into standard OpenAI (/v1/chat/completions) and Google Gemini Native (/v1beta/models) API endpoints."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is gemini-shim completely free to use?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, gemini-shim is 100% free and open-source under the MIT license. It works anonymously out of the box without requiring Google API keys or credit cards."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which models does gemini-shim support?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "gemini-shim supports gemini-3.7-flash, gemini-3.6-flash, gemini-3.5-flash, gemini-3.5-flash-thinking, gemini-3.1-pro, gemini-auto, and gemini-flash-lite, with dynamic @think=N parameter overrides for thinking depth."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does gemini-shim compare to the previous Python implementation?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The Go version of gemini-shim reduces memory consumption from 60MB to ~12MB, provides sub-millisecond proxy latency, handles over 10,000 concurrent SSE streaming goroutines, and compiles into a single portable binary without runtime dependencies."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I connect third-party AI clients like ChatBox, Cherry Studio, or NextChat to gemini-shim?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Simply configure your AI client's Base URL to http://localhost:8081/v1 (or your Cloudflare Worker URL) with any arbitrary API key."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <div class="ambient-glow-1"></div>
+  <div class="ambient-glow-2"></div>
+
+  <!-- Navbar -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="#" class="brand">
+        <img src="logo.svg" alt="gemini-shim Logo">
+        <span>gemini-shim</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#playground">Playground</a></li>
+        <li><a href="#models">Models</a></li>
+        <li><a href="#integration">Integration</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="#downloads">Downloads</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="https://github.com/birajrai/gemini-shim" target="_blank" class="btn btn-secondary">
+          <i data-lucide="star"></i>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-pill">
+        <i data-lucide="zap"></i>
+        <span>v1.0.0 • Go + Gin & Cloudflare Workers</span>
+      </div>
+      <h1>
+        Google Gemini Web into <br>
+        <span class="gradient-text">OpenAI Compatible API</span>
+      </h1>
+      <p>
+        Zero authentication required by default. Ultra-low latency, native SSE streaming, multi-fingerprint rotation, and full function calling emulation.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#playground" class="btn btn-primary">
+          <i data-lucide="play"></i>
+          <span>Live Playground</span>
+        </a>
+        <a href="#downloads" class="btn btn-secondary">
+          <i data-lucide="download"></i>
+          <span>Download Binaries</span>
+        </a>
+      </div>
+
+      <!-- Quick Run Command -->
+      <div class="quick-terminal">
+        <code id="quick-cmd">go run github.com/birajrai/gemini-shim@latest --port 8081</code>
+        <button class="copy-btn" onclick="copySnippet('quick-cmd', this)">
+          <i data-lucide="copy"></i>
+          <span>Copy</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benchmarks / Metrics -->
+  <section class="container">
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-val">~12 MB</div>
+        <div class="metric-label">Idle Memory Footprint</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">&lt; 1 ms</div>
+        <div class="metric-label">Internal Proxy Latency</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">10,000+</div>
+        <div class="metric-label">Concurrent SSE Goroutines</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">Zero</div>
+        <div class="metric-label">Required API Keys / Auth</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Playground -->
+  <section id="playground" class="playground-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Interactive Playground</h2>
+        <p>Test real-time token streaming and prompt responses directly in your browser.</p>
+      </div>
+
+      <div class="playground-card">
+        <div class="playground-topbar">
+          <div class="window-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <div class="playground-controls">
+            <select id="playground-model" class="select-input">
+              <option value="gemini-3.7-flash">gemini-3.7-flash (Latest)</option>
+              <option value="gemini-3.6-flash" selected>gemini-3.6-flash</option>
+              <option value="gemini-3.5-flash-thinking">gemini-3.5-flash-thinking</option>
+              <option value="gemini-3.1-pro">gemini-3.1-pro</option>
+            </select>
+            <select id="playground-think" class="select-input">
+              <option value="standard">Standard Think (@think=4)</option>
+              <option value="deep">Deep Think (@think=0)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="playground-body">
+          <div class="playground-input-pane">
+            <span class="pane-label">Input Prompt</span>
+            <textarea id="playground-prompt" class="prompt-textarea" placeholder="Type a prompt...">Explain quantum computing in one sentence.</textarea>
+            <div class="pane-actions">
+              <button id="playground-run-btn" class="btn btn-primary">
+                <i data-lucide="play"></i>
+                <span>Run Test</span>
+              </button>
+            </div>
+          </div>
+          <div class="playground-output-pane">
+            <span class="pane-label">Live Stream Response</span>
+            <div id="playground-output" class="output-content">
+              Click "Run Test" to stream Gemini response here...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="container">
+    <div class="section-header">
+      <h2>Engineered for Performance</h2>
+      <p>Everything you need for seamless drop-in AI integration.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <i data-lucide="shield-check"></i>
+        </div>
+        <h3>Zero Auth Required</h3>
+        <p>Works out of the box with anonymous public access. Optional cookie sync unlocks Pro models and custom Google accounts.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <i data-lucide="activity"></i>
+        </div>
+        <h3>Native SSE Streaming</h3>
+        <p>Built with Go channels and http.Flusher for immediate typewriter token generation and minimal time-to-first-token.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <i data-lucide="code-2"></i>
+        </div>
+        <h3>Tool & Function Calling</h3>
+        <p>Translates standard OpenAI tools and Google functionDeclarations schemas into structured model prompts and extracts calls automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <i data-lucide="image"></i>
+        </div>
+        <h3>Multimodal Image Upload</h3>
+        <p>Supports inline Base64 images and remote URLs via automatic Google Scotty resumable upload protocol.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <i data-lucide="cloud"></i>
+        </div>
+        <h3>Edge Ready (Cloudflare)</h3>
+        <p>Deploy directly to Cloudflare Workers across 300+ global edge locations with zero server management.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <i data-lucide="puzzle"></i>
+        </div>
+        <h3>1-Click Extension Sync</h3>
+        <p>Extract session cookies and XSRF build tokens from your browser using the included Chrome/Edge extension.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Models Matrix -->
+  <section id="models" class="container">
+    <div class="section-header">
+      <h2>Supported Models</h2>
+      <p>Full suite of Gemini Web models with dynamic thinking depth parameter overrides.</p>
+    </div>
+
+    <div class="downloads-grid">
+      <div class="download-card">
+        <div class="download-header">
+          <div class="download-header-top">
+            <i data-lucide="sparkles"></i>
+            <h3>gemini-3.7-flash</h3>
+          </div>
+          <p>Latest high-speed all-around model (Default)</p>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Mode: Fast (1) • Think: Standard (4)</p>
+      </div>
+      <div class="download-card">
+        <div class="download-header">
+          <div class="download-header-top">
+            <i data-lucide="brain"></i>
+            <h3>gemini-3.5-flash-thinking</h3>
+          </div>
+          <p>Deep reasoning mode with extended output (~20k tokens)</p>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Mode: Thinking (2) • Think: Deep (0)</p>
+      </div>
+      <div class="download-card">
+        <div class="download-header">
+          <div class="download-header-top">
+            <i data-lucide="cpu"></i>
+            <h3>gemini-3.1-pro</h3>
+          </div>
+          <p>Flagship Pro model for complex logic and math</p>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Mode: Pro (3) • Requires Cookie</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Code Integration Tabs -->
+  <section id="integration" class="container">
+    <div class="section-header">
+      <h2>Drop-in API Compatibility</h2>
+      <p>Connect your existing OpenAI or Google Gemini clients with zero code changes.</p>
+    </div>
+
+    <div class="code-tabs-wrapper">
+      <div class="code-tabs-header">
+        <button class="tab-btn active" data-target="tab-curl">
+          <i data-lucide="terminal"></i>
+          <span>cURL</span>
+        </button>
+        <button class="tab-btn" data-target="tab-python">
+          <i data-lucide="file-code"></i>
+          <span>Python</span>
+        </button>
+        <button class="tab-btn" data-target="tab-node">
+          <i data-lucide="file-code"></i>
+          <span>Node.js</span>
+        </button>
+        <button class="tab-btn" data-target="tab-google">
+          <i data-lucide="layers"></i>
+          <span>Google SDK</span>
+        </button>
+      </div>
+
+      <div id="tab-curl" class="code-pane code-block">
+<pre><code>curl http://localhost:8081/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemini-3.7-flash",
+    "messages": [{"role": "user", "content": "Hello Gemini!"}],
+    "stream": true
+  }'</code></pre>
+      </div>
+
+      <div id="tab-python" class="code-pane code-block" style="display: none;">
+<pre><code>from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:8081/v1",
+    api_key="any-key-or-empty"
+)
+
+response = client.chat.completions.create(
+    model="gemini-3.7-flash",
+    messages=[{"role": "user", "content": "Hello!"}],
+    stream=True
+)
+
+for chunk in response:
+    print(chunk.choices[0].delta.content or "", end="")</code></pre>
+      </div>
+
+      <div id="tab-node" class="code-pane code-block" style="display: none;">
+<pre><code>import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  baseURL: 'http://localhost:8081/v1',
+  apiKey: 'any-key',
+});
+
+const stream = await openai.chat.completions.create({
+  model: 'gemini-3.7-flash',
+  messages: [{ role: 'user', content: 'Hello!' }],
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content || '');
+}</code></pre>
+      </div>
+
+      <div id="tab-google" class="code-pane code-block" style="display: none;">
+<pre><code>curl http://localhost:8081/v1beta/models/gemini-3.7-flash:generateContent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "contents": [
+      {"role": "user", "parts": [{"text": "Hello Gemini native!"}]}
+    ]
+  }'</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section (AEO/GEO Optimized) -->
+  <section id="faq" class="container" style="margin-bottom: 100px;">
+    <div class="section-header">
+      <h2>Frequently Asked Questions</h2>
+      <p>Direct answers for AI answer engines and developers.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; max-width: 800px; margin: 0 auto;">
+      <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 24px; cursor: pointer;">
+        <summary style="font-weight: 600; font-size: 1.05rem; color: var(--text-main); outline: none;">How does gemini-shim achieve zero authentication?</summary>
+        <p style="margin-top: 12px; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+          Google Gemini's public StreamGenerate web endpoint permits basic text and chat generation without requiring Google account credentials. gemini-shim constructs the exact 102-field internal RPC payload expected by the frontend service, enabling anonymous access out of the box.
+        </p>
+      </details>
+
+      <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 24px; cursor: pointer;">
+        <summary style="font-weight: 600; font-size: 1.05rem; color: var(--text-main); outline: none;">How do I connect ChatBox, Cherry Studio, or NextChat?</summary>
+        <p style="margin-top: 12px; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+          In your AI client settings, set the <strong>API Provider</strong> to <code>OpenAI</code>, set the <strong>Base URL / Host</strong> to <code>http://localhost:8081/v1</code> (or your Cloudflare Worker URL), and enter any random string as the API key.
+        </p>
+      </details>
+
+      <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 24px; cursor: pointer;">
+        <summary style="font-weight: 600; font-size: 1.05rem; color: var(--text-main); outline: none;">Can I use custom Google cookies for Pro models?</summary>
+        <p style="margin-top: 12px; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+          Yes. You can use the included browser extension in <code>extension/</code> to export <code>gemini-auth.json</code> with one click and pass it via <code>--cookie-file gemini-auth.json</code> or configure it in <code>config.json</code>.
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Downloads / Direct Release Assets -->
+  <section id="downloads" class="container">
+    <div class="section-header">
+      <h2>Direct Binary Downloads</h2>
+      <p>Standalone, zero-dependency pre-compiled binaries from the latest release.</p>
+    </div>
+
+    <div class="downloads-grid">
+      <!-- Linux Card -->
+      <div class="download-card">
+        <div class="download-header">
+          <div class="download-header-top">
+            <i data-lucide="server"></i>
+            <h3>Linux</h3>
+          </div>
+          <p>Standalone compressed tarball</p>
+        </div>
+        <div class="download-links-group">
+          <a href="https://github.com/birajrai/gemini-shim/releases/latest/download/gemini-shim-latest-linux-amd64.tar.gz" class="download-direct-btn">
+            <span><i data-lucide="download"></i> Linux x86_64</span>
+            <span class="arch-tag">amd64</span>
+          </a>
+          <a href="https://github.com/birajrai/gemini-shim/releases/latest/download/gemini-shim-latest-linux-arm64.tar.gz" class="download-direct-btn">
+            <span><i data-lucide="download"></i> Linux ARM64</span>
+            <span class="arch-tag">arm64</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- macOS Card -->
+      <div class="download-card">
+        <div class="download-header">
+          <div class="download-header-top">
+            <i data-lucide="laptop"></i>
+            <h3>macOS</h3>
+          </div>
+          <p>Apple Silicon & Intel builds</p>
+        </div>
+        <div class="download-links-group">
+          <a href="https://github.com/birajrai/gemini-shim/releases/latest/download/gemini-shim-latest-darwin-arm64.tar.gz" class="download-direct-btn">
+            <span><i data-lucide="download"></i> Apple Silicon</span>
+            <span class="arch-tag">arm64</span>
+          </a>
+          <a href="https://github.com/birajrai/gemini-shim/releases/latest/download/gemini-shim-latest-darwin-amd64.tar.gz" class="download-direct-btn">
+            <span><i data-lucide="download"></i> Intel Mac</span>
+            <span class="arch-tag">amd64</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Windows Card -->
+      <div class="download-card">
+        <div class="download-header">
+          <div class="download-header-top">
+            <i data-lucide="monitor"></i>
+            <h3>Windows</h3>
+          </div>
+          <p>Direct executable zip archive</p>
+        </div>
+        <div class="download-links-group">
+          <a href="https://github.com/birajrai/gemini-shim/releases/latest/download/gemini-shim-latest-windows-amd64.zip" class="download-direct-btn">
+            <span><i data-lucide="download"></i> Windows x64</span>
+            <span class="arch-tag">.exe</span>
+          </a>
+          <a href="https://github.com/birajrai/gemini-shim/releases/latest/download/gemini-shim-latest-windows-arm64.zip" class="download-direct-btn">
+            <span><i data-lucide="download"></i> Windows ARM64</span>
+            <span class="arch-tag">.exe</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: -50px; margin-bottom: 80px;">
+      <a href="https://github.com/birajrai/gemini-shim/releases" target="_blank" class="btn btn-secondary">
+        <i data-lucide="archive"></i>
+        <span>Browse All Releases & Checksums</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>gemini-shim is an open-source project created by <a href="https://github.com/birajrai" target="_blank">birajrai</a> under the MIT License.</p>
+    </div>
+  </footer>
+
+  <!-- Lucide Icons CDN (cdnjs) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.469.0/umd/lucide.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

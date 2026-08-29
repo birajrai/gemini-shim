@@ -1,0 +1,22 @@
+{
+  "name": "gemini-shim-cloudflare",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers deployment for gemini-shim",
+  "main": "worker.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "keywords": [
+    "gemini",
+    "openai",
+    "proxy",
+    "cloudflare-workers",
+    "api"
+  ],
+  "author": "birajrai",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
