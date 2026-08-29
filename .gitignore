@@ -25,5 +25,13 @@ gemini-auth.json
 .vscode/
 .DS_Store
 
+# Node / Cloudflare
+node_modules/
+bun.lock
+bun.lockb
+package-lock.json
+dist/
+
 # Archived old code
 old/
+
