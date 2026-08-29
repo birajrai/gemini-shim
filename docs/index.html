@@ -398,10 +398,8 @@ for chunk in response:
       <div id="tab-node" class="code-pane code-block" style="display: none;">
 <pre><code>import { GeminiShim } from 'gemini-shim';
 
-const ai = new GeminiShim({
-  baseURL: 'http://localhost:8081/v1',
-  defaultModel: 'gemini-3.7-flash'
-});
+// Zero configuration - No endpoint, URL, or port required!
+const ai = new GeminiShim();
 
 // 1. One-line stream
 const stream = await ai.stream('Write a poem about space');

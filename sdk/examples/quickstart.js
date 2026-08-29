@@ -1,13 +1,11 @@
 import { GeminiShim } from "../src/index.ts";
 
-const ai = new GeminiShim({
-  baseURL: "http://127.0.0.1:8081/v1", // or "https://gemini-shim.gauravuchil13.workers.dev/v1"
-  defaultModel: "gemini-3.7-flash",
-});
+// 100% Native: No baseURL, no endpoint, no port, no proxy!
+const ai = new GeminiShim();
 
 async function main() {
-  console.log("Asking Gemini...");
-  const response = await ai.chat("Explain quantum entanglement in 2 sentences.");
+  console.log("Asking Gemini directly (zero endpoints/ports)...");
+  const response = await ai.chat("What are 3 tips for writing clean code? Answer concisely in JSON or bullet points.");
   console.log("\nResponse:\n" + response.text);
 }
 

@@ -41,9 +41,8 @@ export interface Tool {
 
 export interface GeminiShimOptions {
   /**
-   * Base URL for the OpenAI-compatible endpoint.
-   * Default: "https://gemini-shim.gauravuchil13.workers.dev/v1"
-   * Or local: "http://127.0.0.1:8081/v1"
+   * Optional custom endpoint URL. If omitted, the SDK communicates
+   * directly with Gemini Web natively with ZERO servers or proxies required.
    */
   baseURL?: string;
 
@@ -53,8 +52,7 @@ export interface GeminiShimOptions {
   endpoint?: string;
 
   /**
-   * API Key if authentication is configured on the proxy.
-   * Optional for public / open instances.
+   * Optional API Key if using a secured proxy instance.
    */
   apiKey?: string;
 
@@ -65,10 +63,15 @@ export interface GeminiShimOptions {
   defaultModel?: GeminiModel;
 
   /**
-   * Custom Google Gemini cookie (e.g. "__Secure-1PSID=...; SAPISID=...")
-   * for authenticated or Pro model routing.
+   * Optional Google Gemini cookie (e.g. "__Secure-1PSID=...; SAPISID=...")
+   * for authenticated multi-account or Pro model routing.
    */
   cookie?: string;
+
+  /**
+   * Optional multi-account user index (e.g. "0", "1") when using multiple Google accounts.
+   */
+  authUser?: string;
 
   /**
    * Request timeout in milliseconds.

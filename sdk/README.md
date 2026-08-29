@@ -1,8 +1,10 @@
 # gemini-shim (NPM Package)
 
-> Ultra-fast, zero-config Google Gemini AI client & chatbot SDK for JavaScript and TypeScript.
+> Standalone, zero-config Google Gemini AI client & chatbot SDK for JavaScript and TypeScript.
 
-Supports **Node.js**, **Bun**, **Deno**, **Cloudflare Workers**, and modern **Browsers**.
+**Works natively with ZERO servers, ZERO proxies, and ZERO endpoints required.**
+
+Supports **Node.js**, **Bun**, **Deno**, and modern **Browsers**.
 
 ---
 
@@ -20,24 +22,20 @@ pnpm add gemini-shim
 
 ## Quickstart
 
-### 1. Simple One-Liner Chat
+### 1. Zero-Config One-Liner (No Endpoint, No Port Needed)
 ```typescript
 import { GeminiShim } from "gemini-shim";
 
-const ai = new GeminiShim({
-  // Use public edge worker or local proxy
-  baseURL: "https://gemini-shim.gauravuchil13.workers.dev/v1", // or "http://127.0.0.1:8081/v1"
-  defaultModel: "gemini-3.7-flash",
-});
+const ai = new GeminiShim();
 
-const response = await ai.chat("Explain quantum computing in simple terms.");
+const response = await ai.chat("Explain quantum computing in 2 sentences.");
 console.log(response.text);
 ```
 
 ---
 
 ### 2. Real-Time Token Streaming
-Stream responses token-by-token directly into stdout or a web response stream:
+Stream responses token-by-token natively:
 
 ```typescript
 import { GeminiShim } from "gemini-shim";
@@ -53,7 +51,7 @@ for await (const chunk of stream) {
 
 ---
 
-### 3. Multi-Turn Conversational Chatbot
+### 3. Multi-Turn Conversational Chatbot (With Memory)
 Create stateful chat sessions that automatically retain conversational history:
 
 ```typescript
@@ -61,57 +59,42 @@ import { GeminiShim } from "gemini-shim";
 
 const ai = new GeminiShim();
 
-// Initialize chat session with custom system prompt
+// Initialize chat session with custom persona/system prompt
 const bot = ai.createChat({
   systemInstruction: "You are an expert fullstack TypeScript developer.",
 });
 
-// First message
+// Turn 1
 const reply1 = await bot.sendMessage("How do I handle SSE in React?");
 console.log(reply1.text);
 
-// Follow-up message (preserves previous context)
+// Turn 2 (automatically retains memory & context)
 const reply2 = await bot.sendMessage("Can you show a complete code example?");
 console.log(reply2.text);
 
 // Or stream follow-up messages:
-for await (const chunk of bot.sendMessageStream("How do I test this?")) {
+for await (const chunk of bot.sendMessageStream("How do I test this with Jest?")) {
   process.stdout.write(chunk);
 }
 ```
 
 ---
 
-### 4. Building a Next.js / Express AI Chatbot API
+### 4. Optional Custom Settings
 
-#### Next.js Route Handler (`app/api/chat/route.ts`):
 ```typescript
 import { GeminiShim } from "gemini-shim";
 
-const ai = new GeminiShim();
+const ai = new GeminiShim({
+  // Default model (gemini-3.7-flash, gemini-3.5-flash-thinking, gemini-3.1-pro)
+  defaultModel: "gemini-3.7-flash",
 
-export async function POST(req: Request) {
-  const { messages } = await req.json();
+  // Optional: Google session cookie for Pro models / multi-account routing
+  cookie: "__Secure-1PSID=...; SAPISID=...",
 
-  const stream = await ai.stream({
-    model: "gemini-3.7-flash",
-    messages,
-  });
-
-  const encoder = new TextEncoder();
-  const readable = new ReadableStream({
-    async start(controller) {
-      for await (const chunk of stream) {
-        controller.enqueue(encoder.encode(chunk));
-      }
-      controller.close();
-    },
-  });
-
-  return new Response(readable, {
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  });
-}
+  // Optional: Custom endpoint URL if you want to route via your own proxy/worker
+  // baseURL: "http://127.0.0.1:8081/v1"
+});
 ```
 
 ---
@@ -125,29 +108,6 @@ export async function POST(req: Request) {
 | `gemini-3.6-flash` | Balanced Flash model | General tasks |
 | `gemini-3.1-pro` | Gemini Pro model | High-reasoning tasks |
 | `gemini-flash-lite` | Ultra-lightweight model | Low latency classification |
-
----
-
-## Configuration Options
-
-```typescript
-const ai = new GeminiShim({
-  // OpenAI-compatible endpoint URL
-  baseURL: "https://gemini-shim.gauravuchil13.workers.dev/v1", // or "http://127.0.0.1:8081/v1"
-
-  // Default model for all requests
-  defaultModel: "gemini-3.7-flash",
-
-  // Optional API key if your server is secured
-  apiKey: "sk-your-key",
-
-  // Optional Google session cookie for authenticated routing
-  cookie: "__Secure-1PSID=...; SAPISID=...",
-
-  // Request timeout in milliseconds (default: 60000)
-  timeoutMs: 60000,
-});
-```
 
 ---
 

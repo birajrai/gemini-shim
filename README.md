@@ -63,7 +63,7 @@ See the [Cloudflare Deployment Guide](cloudflare/README.md) for web dashboard se
 
 ## NPM SDK / Chatbot Library
 
-Build AI chatbots in JavaScript & TypeScript with the official zero-config SDK:
+Build AI chatbots in JavaScript & TypeScript with zero configuration, zero endpoints, and zero proxies:
 
 ```bash
 npm install gemini-shim
@@ -72,10 +72,8 @@ npm install gemini-shim
 ```typescript
 import { GeminiShim } from "gemini-shim";
 
-const ai = new GeminiShim({
-  baseURL: "http://127.0.0.1:8081/v1", // or your Cloudflare Worker URL
-  defaultModel: "gemini-3.7-flash"
-});
+// Works 100% natively - No endpoint, URL, or port needed!
+const ai = new GeminiShim();
 
 // 1. One-liner chat
 const res = await ai.chat("Hello Gemini!");
@@ -90,9 +88,9 @@ for await (const chunk of stream) {
 // 3. Multi-turn Chatbot with memory
 const bot = ai.createChat({ systemInstruction: "You are a helpful assistant." });
 const r1 = await bot.sendMessage("Hi, I am from Nepal.");
-const r2 = await bot.sendMessage("What is my country?"); // Remembers context
+const r2 = await bot.sendMessage("What is my country?"); // Remembers context: Nepal
 ```
-See the [SDK Documentation](sdk/README.md) for Next.js, Express, and advanced examples.
+See the [SDK Documentation](sdk/README.md) for full documentation and examples.
 
 
 ### Cookie Extraction Extension
